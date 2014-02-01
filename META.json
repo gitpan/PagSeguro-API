@@ -1,0 +1,43 @@
+{
+   "abstract" : "PagSeguro API Client",
+   "author" : [
+      "Daniel Vinciguerra (daniel.vinciguerra@bivee.com.br)"
+   ],
+   "dynamic_config" : 1,
+   "generated_by" : "ExtUtils::MakeMaker version 6.84, CPAN::Meta::Converter version 2.133380",
+   "license" : [
+      "unknown"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "PagSeguro-API",
+   "no_index" : {
+      "directory" : [
+         "t",
+         "inc"
+      ]
+   },
+   "prereqs" : {
+      "build" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : "0"
+         }
+      },
+      "configure" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : "0"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "LWP::Simple" : "6",
+            "Test::More" : "0.98",
+            "XML::Simple" : "2.2"
+         }
+      }
+   },
+   "release_status" : "stable",
+   "version" : "0.002"
+}
