@@ -9,7 +9,7 @@ SYNOPSIS
             email=> 'foo@bar.com', token=>'95112EE828D94278BD394E91C4388F20'
         );
 
-
+        
         # load transaction by code
         my $transaction = $ps->transaction
             ->load('TRANSACTION_CODE_HERE');

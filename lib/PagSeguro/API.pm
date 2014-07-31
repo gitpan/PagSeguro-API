@@ -1,9 +1,9 @@
 package PagSeguro::API;
 use strict;
 use warnings;
-our $VERSION = '0.002';
+our $VERSION = '0.003';
 
-use PagSeguro::API::Resource;
+use PagSeguro::API::Checkout;
 use PagSeguro::API::Transaction;
 
 # constructor
@@ -14,10 +14,26 @@ sub new {
     # start resource
     PagSeguro::API::Resource->instance;
 
+    # check env vars
+    $args{email} = $ENV{PAGSEGURO_API_EMAIL} || undef
+        unless $args{email};
+
+    $args{token} = $ENV{PAGSEGURO_API_TOKEN} || undef
+        unless $args{token};
+
+    # enable sandbox
+    $ENV{PAGSEGURO_API_SANDBOX} = $args{sandbox} 
+        if $args{sandbox};
+
+    # enable debug
+    $ENV{PAGSEGURO_API_DEBUG} = $args{debug} 
+        if $args{debug};
+
     return bless {
         _email => $args{email} || undef,
         _token => $args{token} || undef,
 
+        _checkout     => undef,
         _transaction  => undef,
         _notification => undef,
     }, $class;
@@ -54,6 +70,26 @@ sub transaction {
     return $self->{_transaction};
 }
 
+sub checkout {
+    my $self = shift;
+
+    # error
+    die "Exception: e-mail or token undef" 
+        unless $self->email && $self->token;
+
+    # manual instance
+    $self->{_checkout} = $_[0] 
+        if $_[0] && $_[0]->isa('PagSeguro::API::Checkout');
+
+
+    $self->{_checkout} = PagSeguro::API::Checkout->new(
+        email => $self->email, token => $self->token
+    ) unless $self->{_checkout};
+
+    return $self->{_checkout};
+}
+
+
 1;
 __END__
 
@@ -69,7 +105,10 @@ PagSeguro::API - UOL PagSeguro Payment Gateway API Module
 
     # new instance
     my $ps = PagSeguro::API->new(
-        email=> 'foo@bar.com', token=>'95112EE828D94278BD394E91C4388F20'
+        debug   => 1,                   # enable debug
+        sandbox => 1,                   # enable sandbox
+        email   => 'sandbox@bar.com', 
+        token   =>'95112EE828D94278BD394E91C4388F20'
     );
 
 
@@ -80,27 +119,76 @@ PagSeguro::API - UOL PagSeguro Payment Gateway API Module
     # api xml response to perl hash
     say $transaction->{sender}->{name}; # Foo Bar
 
+=head1 VARS
+
+Enviroment variables that you can define to configure your access, 
+debug mode, sandbox use, etc...
+
+=head3 email
+
+Configure email to access api.
+
+    my $ps = PagSeguro::API->new( email => 'joe@doe.com' );
+
+or you can use env var
+
+    $ENV{PAGSEGURO_API_EMAIL} = 'joe@doe.com';
+
+=head3 token
+
+Configure token to access api.
+
+    my $ps = PagSeguro::API->new( token => '95112EE828D94278BD394E91C4388F20' );
+
+or you can use env var
+
+    $ENV{PAGSEGURO_API_TOKEN} = '95112EE828D94278BD394E91C4388F20';
+
+=head3 sandbox
+
+Configure module to use sandbox mode (default is 0).
+
+    my $ps = PagSeguro::API->new( sandbox => 1 );
+
+or you can use env var
+
+    $ENV{PAGSEGURO_API_SANDBOX} = 1;
+
+=head3 debug
+
+Configure module to use debug mode (default is 0).
+
+    my $ps = PagSeguro::API->new( debug => 1 );
+
+or you can use env var
+
+    $ENV{PAGSEGURO_API_DEBUG} = 1;
+
 
 =head1 ACCESSORS
 
 Public properties and their accessors
 
 =head3 email
-    
+
+This is the user registered email that you need to use PagSeguro payment API.
+
     # get or set email property
     $ps->email('foo@bar.com');
     say $ps->email; 
 
-Email is a required properties to access HTTP GET based API urls.
+*email is a required properties to access HTTP GET based API urls.
 
 
 =head3 token
+
+This is a key that you need to use PagSeguro payment API.
     
     # get or set token property
     $ps->token('95112EE828D94278BD394E91C4388F20');
     say $ps->token;
 
-Token is a required properties to access HTTP GET based API urls.
+*token is a required properties to access HTTP GET based API urls.
 
 
 =head1 METHODS
@@ -115,13 +203,19 @@ or pass paramethers...
         email => 'foo@bar.com', token => '95112EE828D94278BD394E91C4388F20'
     );
 
+=head3 checkout
+
+    # getting product checkout class instance
+    my $c = $ps->checkout;
+    
+    $ps->checkout( PagSeguro::API::Checkout->new );
+
 
 =head3 transaction
 
     # getting transaction class instance
     my $t = $ps->transaction;
-
-    # setting new transaction instance
+    
     $ps->transaction( PagSeguro::API::Transaction->new );
 
 
