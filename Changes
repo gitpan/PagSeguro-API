@@ -6,5 +6,7 @@ Revision history for Perl module PagSeguro::API
     - added example (using mojo)
     - classes improvements
 
+0.04 Fri Ago 31 16:59:44 2014
+    - notification
 
 

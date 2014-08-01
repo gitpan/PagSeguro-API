@@ -22,4 +22,4 @@ requires:
   LWP::UserAgent: '6'
   Test::More: '0.98'
   XML::Simple: '2.2'
-version: '0.003'
+version: '0.004'

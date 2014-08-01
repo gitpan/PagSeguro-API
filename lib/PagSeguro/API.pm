@@ -1,10 +1,11 @@
 package PagSeguro::API;
 use strict;
 use warnings;
-our $VERSION = '0.003';
+our $VERSION = '0.004';
 
 use PagSeguro::API::Checkout;
 use PagSeguro::API::Transaction;
+use PagSeguro::API::Notification;
 
 # constructor
 sub new {
@@ -70,6 +71,25 @@ sub transaction {
     return $self->{_transaction};
 }
 
+sub notification {
+    my $self = shift;
+
+    # error
+    die "Exception: e-mail or token undef" 
+        unless $self->email && $self->token;
+
+    # manual instance
+    $self->{_notification} = $_[0] 
+        if $_[0] && $_[0]->isa('PagSeguro::API::Notification');
+
+
+    $self->{_notification} = PagSeguro::API::Notification->new(
+        email => $self->email, token => $self->token
+    ) unless $self->{_notification};
+
+    return $self->{_notification};
+}
+
 sub checkout {
     my $self = shift;
 
@@ -124,7 +144,7 @@ PagSeguro::API - UOL PagSeguro Payment Gateway API Module
 Enviroment variables that you can define to configure your access, 
 debug mode, sandbox use, etc...
 
-=head3 email
+=head2 email
 
 Configure email to access api.
 
@@ -134,7 +154,7 @@ or you can use env var
 
     $ENV{PAGSEGURO_API_EMAIL} = 'joe@doe.com';
 
-=head3 token
+=head2 token
 
 Configure token to access api.
 
@@ -144,7 +164,7 @@ or you can use env var
 
     $ENV{PAGSEGURO_API_TOKEN} = '95112EE828D94278BD394E91C4388F20';
 
-=head3 sandbox
+=head2 sandbox
 
 Configure module to use sandbox mode (default is 0).
 
@@ -154,7 +174,7 @@ or you can use env var
 
     $ENV{PAGSEGURO_API_SANDBOX} = 1;
 
-=head3 debug
+=head2 debug
 
 Configure module to use debug mode (default is 0).
 
@@ -169,7 +189,7 @@ or you can use env var
 
 Public properties and their accessors
 
-=head3 email
+=head2 email
 
 This is the user registered email that you need to use PagSeguro payment API.
 
@@ -180,7 +200,7 @@ This is the user registered email that you need to use PagSeguro payment API.
 *email is a required properties to access HTTP GET based API urls.
 
 
-=head3 token
+=head2 token
 
 This is a key that you need to use PagSeguro payment API.
     
@@ -193,7 +213,7 @@ This is a key that you need to use PagSeguro payment API.
 
 =head1 METHODS
 
-=head3 new
+=head2 new
 
     my $ps = PagSeguro::API->new;
 
@@ -203,7 +223,7 @@ or pass paramethers...
         email => 'foo@bar.com', token => '95112EE828D94278BD394E91C4388F20'
     );
 
-=head3 checkout
+=head2 checkout
 
     # getting product checkout class instance
     my $c = $ps->checkout;
@@ -211,7 +231,7 @@ or pass paramethers...
     $ps->checkout( PagSeguro::API::Checkout->new );
 
 
-=head3 transaction
+=head2 transaction
 
     # getting transaction class instance
     my $t = $ps->transaction;
@@ -223,6 +243,19 @@ L<PagSeguro::API::Transaction> is a class that will provide access to transactio
 methods for API.
 
 See more informations about at L<PagSeguro::API::Transaction>.
+
+=head2 notification
+
+    # getting notification class instance
+    my $n = $ps->notification;
+    
+    $ps->notification( PagSeguro::API::Notification->new );
+
+
+L<PagSeguro::API::Notification> is a class that will provide access to notification
+methods for API.
+
+See more informations about at L<PagSeguro::API::Notification>.
 
 =head1 BUG
 
