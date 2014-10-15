@@ -10,9 +10,7 @@ sub new {
     my %args = @_ if ( @_ % 2 ) == 0;
 
     return bless {
-        email => $args{email} || undef,
-        token => $args{token} || undef,
-
+        _context => ($args->{context})? $args->{context} : $args,
         _notification => undef,
     }, $class;
 }
@@ -43,14 +41,14 @@ sub _code_uri {
 
     my $uri = join '',
       (
-        $self->resource(
+        $self->_context->resource(
             ( $ENV{PAGSEGURO_API_SANDBOX} ? 'SANDBOX_URI' : 'BASE_URI' )
         ),
-        $self->resource('TRANSACTION'),
-        $self->resource('NOTIFICATIONS'),
+        $self->_context->resource('TRANSACTION'),
+        $self->_context->resource('NOTIFICATIONS'),
         "${code}",
-        "?email=" . $self->{email},
-        "&token=" . $self->{token},
+        "?email=" . $self->_context->email,
+        "&token=" . $self->_context->token,
       );
 
     warn "[Debug] URI: $uri\n" if $ENV{PAGSEGURO_API_DEBUG};
@@ -60,27 +58,22 @@ sub _code_uri {
 1;
 __END__
 
-=pod
+=encoding utf8
 
 =head1 NAME
 
-PagSeguro::API::Notification - Notification Class for PagSeguro::API module
+PagSeguro::API::Notification - PagSeguro API notifications end-points
 
 =head1 SYNOPSIS
 
     use PagSeguro::API;
+    my $ps = PagSeguro::API->new;
 
-    # new instance
-    my $ps = PagSeguro::API->new(
-        email=> 'foo@bar.com', token=>'95112EE828D94278BD394E91C4388F20'
-    );
-
-
-    # notification obj
-    my $t = $ps->notification;
+    # notification
+    my $n = $ps->notification;
 
     # load notification by code
-    my $notification = $t->load('766B9C-AD4B044B04DA-77742F5FA653-E1AB24');
+    my $notification = $n->load('766B9C-AD4B044B04DA-77742F5FA653-E1AB24');
     
 
     # notification returns perl hash
@@ -111,23 +104,18 @@ parts and some other things;
 =head3 new
 
     # new instance
-    my $ps = PagSeguro::API::Notification->new(
-        email => 'foo@bar.com', token => '95112EE828D94278BD394E91C4388F20'
-    );
+    my $ps = PagSeguro::API::Notification->new
 
+See L<PagSeguro::API> for more information.
 
 =head3 load
 
-    # getting notification class instance
-    my $t = $ps->notification;
-
-    # load notification by code
-    my $notification = $t->load('00000000-0000-0000-0000-000000000000');
+    my $n = $ps->notification;
+    my $notification = $n->load('00000000-0000-0000-0000-000000000000');
 
     say $notification->{code};
 
-This method will load a notification by code and returns a perl hash as
-success result or C<undef> as error or not found;
+Load a notification data and return as perl hashref if success.
 
 =head1 AUTHOR
 
@@ -143,4 +131,3 @@ This software is copyright (c) 2013 by Bivee.
 This is a free software; you can redistribute it and/or modify it under the same terms of Perl 5 programming 
 languagem system itself.
 
-=cut

@@ -1,7 +1,9 @@
 package PagSeguro::API;
+# ABSTRACT: PagSeguro::API - UOL PagSeguro Payment Gateway API Module
 use strict;
 use warnings;
-our $VERSION = '0.004';
+
+our $VERSION = '0.006';
 
 use PagSeguro::API::Checkout;
 use PagSeguro::API::Transaction;
@@ -10,33 +12,29 @@ use PagSeguro::API::Notification;
 # constructor
 sub new {
     my $class = shift;
-    my %args = @_ if (@_ % 2) == 0;
-
-    # start resource
-    PagSeguro::API::Resource->instance;
+    my $args = (@_ % 2 == 0)? {@_} : shift;
 
     # check env vars
-    $args{email} = $ENV{PAGSEGURO_API_EMAIL} || undef
-        unless $args{email};
+    $args->{email} = $ENV{PAGSEGURO_API_EMAIL} || undef
+        unless $args->{email};
 
-    $args{token} = $ENV{PAGSEGURO_API_TOKEN} || undef
-        unless $args{token};
+    $args->{token} = $ENV{PAGSEGURO_API_TOKEN} || undef
+        unless $args->{token};
 
     # enable sandbox
-    $ENV{PAGSEGURO_API_SANDBOX} = $args{sandbox} 
-        if $args{sandbox};
+    $ENV{PAGSEGURO_API_SANDBOX} = $args->{sandbox} 
+        if $args->{sandbox};
 
     # enable debug
-    $ENV{PAGSEGURO_API_DEBUG} = $args{debug} 
-        if $args{debug};
+    $ENV{PAGSEGURO_API_DEBUG} = $args->{debug} 
+        if $args->{debug};
 
     return bless {
-        _email => $args{email} || undef,
-        _token => $args{token} || undef,
+        _email => $args->{email} || undef,
+        _token => $args->{token} || undef,
 
-        _checkout     => undef,
-        _transaction  => undef,
-        _notification => undef,
+        # load resources
+        _resources => PagSeguro::API::Resource->new
     }, $class;
 }
 
@@ -51,69 +49,60 @@ sub token {
     return shift->{_token};
 }
 
+sub debug {
+    $_[0]->{_debug} = $_[1] if $_[1];
+    return shift->{_debug};
+}
+
+sub sandbox {
+    $_[0]->{_sandbox} = $_[1] if $_[1];
+    return shift->{_sandbox};
+}
+sub resource {
+    return $_[0]->{_resources}->get($_[1]) if $_[1];
+    return $_[0]->{_resources};
+}
+
 # methods
 sub transaction {
     my $self = shift;
 
-    # error
-    die "Exception: e-mail or token undef" 
-        unless $self->email && $self->token;
+    # setting auth
+    $self->_set_auth(@_) if @_;
 
-    # manual instance
-    $self->{_transaction} = $_[0] 
-        if $_[0] && $_[0]->isa('PagSeguro::API::Transaction');
-
-
-    $self->{_transaction} = PagSeguro::API::Transaction->new(
-        email => $self->email, token => $self->token
-    ) unless $self->{_transaction};
-
-    return $self->{_transaction};
+    return PagSeguro::API::Transaction->new( context => $self );
 }
 
 sub notification {
     my $self = shift;
 
-    # error
-    die "Exception: e-mail or token undef" 
-        unless $self->email && $self->token;
+    # setting auth
+    $self->_set_auth(@_) if @_;
 
-    # manual instance
-    $self->{_notification} = $_[0] 
-        if $_[0] && $_[0]->isa('PagSeguro::API::Notification');
-
-
-    $self->{_notification} = PagSeguro::API::Notification->new(
-        email => $self->email, token => $self->token
-    ) unless $self->{_notification};
-
-    return $self->{_notification};
+    return PagSeguro::API::Notification->new( context => $self );
 }
 
 sub checkout {
     my $self = shift;
 
-    # error
-    die "Exception: e-mail or token undef" 
-        unless $self->email && $self->token;
+    # setting auth
+    $self->_set_auth(@_) if @_;
 
-    # manual instance
-    $self->{_checkout} = $_[0] 
-        if $_[0] && $_[0]->isa('PagSeguro::API::Checkout');
-
-
-    $self->{_checkout} = PagSeguro::API::Checkout->new(
-        email => $self->email, token => $self->token
-    ) unless $self->{_checkout};
-
-    return $self->{_checkout};
+    return PagSeguro::API::Checkout->new( context => $self );
 }
 
+sub _set_auth {
+    my $self = shift;
+    my $args = (@_ % 2 == 0)? {@_}: shift;
+
+    $self->email($args->{email}) if $args->{email};
+    $self->email($args->{token}) if $args->{token};
+}
 
 1;
 __END__
 
-=pod
+=encoding utf8
 
 =head1 NAME
 
@@ -139,50 +128,39 @@ PagSeguro::API - UOL PagSeguro Payment Gateway API Module
     # api xml response to perl hash
     say $transaction->{sender}->{name}; # Foo Bar
 
-=head1 VARS
+=head1 PROPERTIES
 
 Enviroment variables that you can define to configure your access, 
 debug mode, sandbox use, etc...
 
 =head2 email
 
+    my $ps = PagSeguro::API->new( email => 'joe@doe.com' );
+    $ENV{PAGSEGURO_API_EMAIL} = 'joe@doe.com';
+
 Configure email to access api.
 
-    my $ps = PagSeguro::API->new( email => 'joe@doe.com' );
-
-or you can use env var
-
-    $ENV{PAGSEGURO_API_EMAIL} = 'joe@doe.com';
 
 =head2 token
 
-Configure token to access api.
-
     my $ps = PagSeguro::API->new( token => '95112EE828D94278BD394E91C4388F20' );
-
-or you can use env var
-
     $ENV{PAGSEGURO_API_TOKEN} = '95112EE828D94278BD394E91C4388F20';
+
+Configure token to access api.
 
 =head2 sandbox
 
-Configure module to use sandbox mode (default is 0).
-
     my $ps = PagSeguro::API->new( sandbox => 1 );
-
-or you can use env var
-
     $ENV{PAGSEGURO_API_SANDBOX} = 1;
+
+Configure module to use sandbox mode (default is 0).
 
 =head2 debug
 
-Configure module to use debug mode (default is 0).
-
     my $ps = PagSeguro::API->new( debug => 1 );
-
-or you can use env var
-
     $ENV{PAGSEGURO_API_DEBUG} = 1;
+
+Configure module to use debug mode (default is 0).
 
 
 =head1 ACCESSORS
