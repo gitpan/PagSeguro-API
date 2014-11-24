@@ -1,48 +1,90 @@
 package PagSeguro::API::Base;
-use strict;
-use warnings;
+use Moo;
 
-use LWP::UserAgent;
-use PagSeguro::API::Resource;
+use XML::LibXML;
 
-sub new {
-    return bless {}, shift;
-}
+# attributes
+has email => (is => 'rw');
+has token => (is => 'rw');
 
-# accessors
-sub resource {
+has environment => (is => 'rw', default => sub { 'production' });
+has debug => (is => 'rw', default => sub { 0 });
+
+sub base_uri {
     my $self = shift;
-    
-    # return resources key
-    my $res = PagSeguro::API::Resource->instance;
-    return ($res->get($_[0]) || undef) if $_[0];
+    return $self->environment eq 'production'?
+        'https://pagseguro.uol.com.br' :
+        'https://sandbox.pagseguro.uol.com.br';
 }
 
-# method
-sub get {
-    my ($self, $url) = @_;
-
-    my $ua = LWP::UserAgent->new;
-    my $response = $ua->get($url) || undef;
-    
-    # success
-    return $response->decoded_content 
-        if $response && $response->is_success
+sub api_uri {
+    my $self = shift;
+    return $self->environment eq 'production'?
+        'https://ws.pagseguro.uol.com.br/v2' :
+        'https://ws.sandbox.pagseguro.uol.com.br/v2';
 }
 
-sub post {
-    my ($self, $url, $params) = @_;
-    
-    my $ua = LWP::UserAgent->new;
-    my $response = $ua->post($url, $params) || undef;
-    
-    # success
-    return $response->decoded_content 
-        if $response && $response->is_success;
+sub xml {
+    my $self = shift;
 
-    # error
-    return $response->status_line;
+    my $xml = XML::LibXML->new;
+    my $doc = $xml->parse_string( $_[0] ) if $_[0];
+
+    return $doc;
 }
-
 
 1;
+
+__END__
+
+=encoding utf8
+
+=head1 NAME
+
+PagSeguro::API::Base - Classe base para as implementações deste módulo
+
+
+=head1 DESCRIPTION
+
+Esta classe prove interface generica com métodos e funcionalidades comuns a 
+todas as classes deste modulo.
+
+
+=head1 ATRIBUTOS
+
+Esta classe disponibiliza os seguintes atributos...
+
+=head2 email
+
+Email do receiver.
+
+=head2 token 
+
+Token da API.
+
+=head2 environment
+
+Flag para utilização do ambiente de produção ou sandbox.
+
+
+=head1 METODOS
+
+Esta classe disponibiliza os seguintes métodos...
+
+=head2 base_uri
+
+URI base do PagSeguro.
+
+=head2 api_uri
+
+URI base da API.
+
+=head2 xml
+
+Parser(L<XML::LibXML>) do XML de resposta da API.
+
+
+=head1 AUTHOR
+
+Daniel Vinciguerra <daniel.vinciguerra@bivee.com.br>
+

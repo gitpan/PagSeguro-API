@@ -21,20 +21,16 @@ my %WriteMakefileArgs = (
   "NAME" => "PagSeguro::API",
   "PREREQ_PM" => {
     "Carp" => 0,
-    "LWP::Simple" => 0,
+    "Exporter" => 0,
     "LWP::UserAgent" => 0,
-    "Try::Tiny" => 0,
-    "XML::Simple" => 0,
-    "base" => 0,
-    "strict" => 0,
-    "warnings" => 0
+    "Moo" => 0,
+    "XML::LibXML" => 0
   },
   "TEST_REQUIRES" => {
-    "FindBin" => 0,
     "Test::More" => 0,
-    "lib" => 0
+    "strict" => 0
   },
-  "VERSION" => "0.006",
+  "VERSION" => "0.009.1",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -43,16 +39,12 @@ my %WriteMakefileArgs = (
 
 my %FallbackPrereqs = (
   "Carp" => 0,
-  "FindBin" => 0,
-  "LWP::Simple" => 0,
+  "Exporter" => 0,
   "LWP::UserAgent" => 0,
+  "Moo" => 0,
   "Test::More" => 0,
-  "Try::Tiny" => 0,
-  "XML::Simple" => 0,
-  "base" => 0,
-  "lib" => 0,
-  "strict" => 0,
-  "warnings" => 0
+  "XML::LibXML" => 0,
+  "strict" => 0
 );
 
 
